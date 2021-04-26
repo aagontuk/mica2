@@ -21,7 +21,7 @@ DPDK<StaticConfig>::DPDK(const ::mica::util::Config& config)
   init_eal(core_mask);
 
   {
-    uint16_t num_ports = rte_eth_dev_count();
+    uint16_t num_ports = rte_eth_dev_count_avail();
     if (StaticConfig::kVerbose)
       printf("total %" PRIu16 " ports available\n", num_ports);
 
@@ -41,7 +41,7 @@ DPDK<StaticConfig>::DPDK(const ::mica::util::Config& config)
     uint32_t ipv4_addr = NetworkAddress::parse_ipv4_addr(
         port_conf.get("ipv4_addr").get_str().c_str());
 
-    ether_addr mac_addr;
+    rte_ether_addr mac_addr;
     if (port_conf.get("mac_addr").exists())
       mac_addr = NetworkAddress::parse_mac_addr(
           port_conf.get("mac_addr").get_str().c_str());
@@ -329,9 +329,9 @@ void DPDK<StaticConfig>::start() {
   // TODO: We may want to allow higher link speeds.
   //eth_conf.link_speeds = ETH_LINK_SPEED_10G;
   eth_conf.rxmode.mq_mode = ETH_MQ_RX_NONE;
-  eth_conf.rxmode.max_rx_pkt_len = ETHER_MAX_LEN;
-  eth_conf.rxmode.hw_vlan_filter = 1;
-  eth_conf.rxmode.hw_vlan_strip = 1;
+  eth_conf.rxmode.max_rx_pkt_len = RTE_ETHER_MAX_LEN;
+  // eth_conf.rxmode.hw_vlan_filter = 1;
+  // eth_conf.rxmode.hw_vlan_strip = 1;
   eth_conf.txmode.mq_mode = ETH_MQ_TX_NONE;
   eth_conf.fdir_conf.mode = RTE_FDIR_MODE_PERFECT;
   eth_conf.fdir_conf.pballoc = RTE_FDIR_PBALLOC_64K;
@@ -350,8 +350,8 @@ void DPDK<StaticConfig>::start() {
   eth_tx_conf.tx_thresh.wthresh = 0;
   eth_tx_conf.tx_free_thresh = 0;
   eth_tx_conf.tx_rs_thresh = 0;
-  eth_tx_conf.txq_flags = (ETH_TXQ_FLAGS_NOMULTSEGS | ETH_TXQ_FLAGS_NOREFCOUNT |
-                           ETH_TXQ_FLAGS_NOMULTMEMP | ETH_TXQ_FLAGS_NOOFFLOADS);
+  // eth_tx_conf.txq_flags = (ETH_TXQ_FLAGS_NOMULTSEGS | ETH_TXQ_FLAGS_NOREFCOUNT |
+  //                          ETH_TXQ_FLAGS_NOMULTMEMP | ETH_TXQ_FLAGS_NOOFFLOADS);
 
   int ret;
 

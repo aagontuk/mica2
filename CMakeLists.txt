@@ -3,8 +3,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(MICA)
 
 
-SET(CMAKE_CXX_COMPILER g++-5)
-SET(CMAKE_C_LINK_EXECUTABLE g++-5)
+SET(CMAKE_CXX_COMPILER g++)
+SET(CMAKE_C_LINK_EXECUTABLE g++)
 
 
 
@@ -87,14 +87,21 @@ IF(DPDK)
 
   MESSAGE(STATUS "Intel DPDK support is enabled (to disable, run `cmake .. -DDPDK=OFF`)")
   set(RTE_SDK ${CMAKE_SOURCE_DIR}/build/dpdk)
+  set(RTE_TARGET x86_64-native-linux-gcc)
   add_definitions(-DUSE_DPDK)
-  add_definitions(-isystem ${RTE_SDK}/build/include -include rte_config.h)
-  link_directories(${LINK_DIRECTORIES} ${RTE_SDK}/build/lib)
+  add_definitions(-isystem ${RTE_SDK}/${RTE_TARGET}/include -include rte_config.h)
+  include_directories(${RTE_SDK}/${RTE_TARGET}/include)
+  include_directories(${RTE_SDK}/lib/librte_eal/linux/eal/include)
+
+  link_directories(${LINK_DIRECTORIES} ${RTE_SDK}/${RTE_TARGET}/lib)
   set(LIBRARIES ${LIBRARIES} -Wl,--whole-archive)
-  set(LIBRARIES ${LIBRARIES} rte_kvargs rte_mbuf rte_ethdev rte_mempool rte_ring rte_eal)
-  set(LIBRARIES ${LIBRARIES} rte_pmd_i40e rte_pmd_ixgbe rte_pmd_ring)
+  set(LIBRARIES ${LIBRARIES} rte_hash)
+  set(LIBRARIES ${LIBRARIES} -Wl,--start-group)
+  set(LIBRARIES ${LIBRARIES} rte_kvargs rte_mbuf rte_ethdev rte_mempool rte_mempool_ring rte_ring rte_net rte_pci rte_eal rte_bus_pci)
+  set(LIBRARIES ${LIBRARIES} rte_common_mlx5 rte_pmd_mlx5 ibverbs mlx5 mnl dl)
+  set(LIBRARIES ${LIBRARIES} -Wl,--end-group)
   set(LIBRARIES ${LIBRARIES} -Wl,--no-whole-archive)
-  set(LIBRARIES ${LIBRARIES} rt dl)
+  set(LIBRARIES ${LIBRARIES} rt)
 
 ELSE(DPDK)
 

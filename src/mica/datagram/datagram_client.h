@@ -192,7 +192,7 @@ class DatagramClient {
   // This differs from local EndpointInfo as it contains more information (e.g.,
   // reachability).
   struct ServerEndpointInfo {
-    ether_addr mac_addr;
+    rte_ether_addr mac_addr;
     uint32_t ipv4_addr;
     uint16_t udp_port;
 
