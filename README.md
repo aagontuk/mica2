@@ -54,10 +54,10 @@ Setting up the general environment
          * ../script/setup.sh 8192 8192    # 2 NUMA nodes, 16 Ki pages (32 GiB)
          * killall etcd; ../../etcd-v2.2.1-linux-amd64/etcd &
 
-Setting up etcd
+Setting up etcd cluster
 ----------------------------------
 
-You need to setup a etcd cluster via the following commands:
+You need to setup an etcd cluster via the following commands:
 
 ```bash
 # Node 0
