@@ -12,6 +12,14 @@ Requirements
  * Intel CPU >= Sandy Bridge (Haswell or more recent recommended)
  * Hugepage (2 GiB) support
 
+Reserve Hugepages
+------------
+
+This repo works with 2-MB hugepages. If you are using 1-GB hugepages, you have to modify the commands related to hugepages in `/etc/default/grub` as follows:
+```bash
+default_hugepagesz=2MB hugepagesz=2M hugepages=65536
+```
+
 Dependencies for compilation
 ----------------------------
 
