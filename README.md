@@ -3,6 +3,8 @@ MICA 2
 
 A fast in-memory key-value store.
 
+The current version should be compiled with DPDK v20.11 (with MLX5 PMD) and gcc-10.
+
 Requirements
 ------------
 
@@ -51,6 +53,33 @@ Setting up the general environment
          * ln -s src/mica/test/*.json .
          * ../script/setup.sh 8192 8192    # 2 NUMA nodes, 16 Ki pages (32 GiB)
          * killall etcd; ../../etcd-v2.2.1-linux-amd64/etcd &
+
+Setting up etcd
+----------------------------------
+
+You need to setup a etcd cluster via the following commands:
+
+```bash
+# Node 0
+etcd --name infra0 --initial-advertise-peer-urls http://192.168.3.13:2380 \
+  --listen-peer-urls http://192.168.3.13:2380 \
+  --listen-client-urls http://192.168.3.13:2379,http://localhost:2379 \
+  --advertise-client-urls http://192.168.3.13:2379 \
+  --initial-cluster-token etcd-cluster-1 \
+  --initial-cluster infra0=http://192.168.3.13:2380,infra1=http://192.168.3.27:2380 \
+  --initial-cluster-state new
+# Node 1
+etcd --name infra1 --initial-advertise-peer-urls http://192.168.3.27:2380 \
+  --listen-peer-urls http://192.168.3.27:2380 \
+  --listen-client-urls http://192.168.3.27:2379,http://localhost:2379 \
+  --advertise-client-urls http://192.168.3.27:2379 \
+  --initial-cluster-token etcd-cluster-1 \
+  --initial-cluster infra0=http://192.168.3.13:2380,infra1=http://192.168.3.27:2380 \
+  --initial-cluster-state new
+```
+
+**You may need to change the IP addresses.**
+
 
 Setting up the DPDK environment
 -------------------------------
