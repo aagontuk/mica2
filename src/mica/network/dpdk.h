@@ -11,6 +11,7 @@
 #include <rte_eal.h>
 #include <rte_ethdev.h>
 #include <rte_eth_ctrl.h>
+#include <rte_flow.h>
 #include <rte_log.h>
 #include <rte_errno.h>
 #include <unistd.h>
@@ -164,6 +165,9 @@ class DPDK : public PacketIOInterface {
 
   uint16_t endpoint_count_;
   EndpointInfo endpoint_info_[StaticConfig::kMaxEndpointCount];
+
+  struct rte_flow_error error;
+  struct rte_flow *flow = NULL;
 
   bool started_;
 };

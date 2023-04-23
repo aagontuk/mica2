@@ -2,6 +2,9 @@
 #ifndef MICA_NETWORK_DPDK_IMPL_H_
 #define MICA_NETWORK_DPDK_IMPL_H_
 
+#define MAX_ACTION_NUM 2
+#define MAX_PATTERN_NUM 4
+
 namespace mica {
 namespace network {
 template <class StaticConfig>
@@ -470,29 +473,68 @@ void DPDK<StaticConfig>::start() {
       if (endpoint_info_[eid].port_id != port_id) continue;
       auto queue_id = endpoint_info_[eid].queue_id;
       auto udp_port = endpoint_info_[eid].udp_port;
-			(void)udp_port;
-			(void)queue_id;
 
-      //rte_eth_fdir_filter filter;
-      //memset(&filter, 0, sizeof(filter));
-      //filter.soft_id = eid;
-      //filter.input.flow_type = RTE_ETH_FLOW_NONFRAG_IPV4_UDP;
-      //filter.input.flow.udp4_flow.dst_port = rte_cpu_to_be_16(udp_port);
-      //filter.action.rx_queue = queue_id;
-      //filter.action.behavior = RTE_ETH_FDIR_ACCEPT;
-      //filter.action.report_status = RTE_ETH_FDIR_NO_REPORT_STATUS;
+      struct rte_flow_attr attr;
+      struct rte_flow_item pattern[MAX_PATTERN_NUM];
+      struct rte_flow_action action[MAX_ACTION_NUM];
+      struct rte_flow_action_queue queue = { .index = queue_id };
+      struct rte_flow_item_udp udp_spec;
+      int res;
 
-      //ret = rte_eth_dev_filter_ctrl(static_cast<uint8_t>(port_id),
-                                    //RTE_ETH_FILTER_FDIR, RTE_ETH_FILTER_ADD,
-                                    //&filter);
-      //if (ret < 0) {
-        //fprintf(stderr,
-                //"error: failed to add perfect filter entry on port %" PRIu16
-                //" (err=%s)\n",
-                //port_id, rte_strerror(ret));
-        //assert(false);
-        //return;
-      //};
+      memset(pattern, 0, sizeof(pattern));
+      memset(action, 0, sizeof(action));
+
+      /*
+       * set the rule attribute.
+       * in this case only ingress packets will be checked.
+       */
+      memset(&attr, 0, sizeof(struct rte_flow_attr));
+      attr.ingress = 1;
+
+      /*
+       * create the action sequence.
+       * one action only,  move packet to queue
+       */
+      action[0].type = RTE_FLOW_ACTION_TYPE_QUEUE;
+      action[0].conf = &queue;
+      action[1].type = RTE_FLOW_ACTION_TYPE_END;
+
+      /*
+       * set the first level of the pattern (ETH).
+       * since in this example we just want to get the
+       * udp we set this level to allow all.
+       */
+      pattern[0].type = RTE_FLOW_ITEM_TYPE_ETH;
+
+      /*
+       * set the second level of the patter to IPV4
+       * and allow any flow
+       */
+      pattern[1].type = RTE_FLOW_ITEM_TYPE_IPV4;
+
+      /*
+       * setting the third level of the pattern (UDP).
+       */
+      memset(&udp_spec, 0, sizeof(struct rte_flow_item_ipv4));
+      udp_spec.hdr.dst_port = rte_cpu_to_be_16(udp_port);
+      pattern[2].type = RTE_FLOW_ITEM_TYPE_UDP;
+      pattern[2].spec = &udp_spec;
+
+      /* the final level must be always type end */
+      pattern[3].type = RTE_FLOW_ITEM_TYPE_END;
+
+      res = rte_flow_validate(port_id, &attr, pattern, action, &error);
+
+      if (!res)
+        flow = rte_flow_create(port_id, &attr, pattern, action, &error);
+
+      if (!flow) {
+        printf("Flow can't be created %d message: %s\n",
+          error.type,
+          error.message ? error.message : "(no stated reason)");
+        
+        rte_exit(EXIT_FAILURE, "error in creating flow");
+      }
     }
   }
 
@@ -506,6 +548,9 @@ void DPDK<StaticConfig>::stop() {
   for (uint16_t port_id = 0; port_id < ports_.size(); port_id++) {
     if (!ports_[port_id].valid) continue;
     if (ports_[port_id].next_available_queue_id == 0) continue;
+
+    // Destroy all flow entries
+    rte_flow_flush(port_id, &error);
 
     if (StaticConfig::kVerbose)
       printf("stopping port %" PRIu16 "...\n", port_id);
