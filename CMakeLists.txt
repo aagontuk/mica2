@@ -2,11 +2,13 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 PROJECT(MICA)
 
+FIND_PACKAGE(PkgConfig REQUIRED)
+
 
 SET(CMAKE_CXX_COMPILER g++)
 SET(CMAKE_C_LINK_EXECUTABLE g++)
 
-
+PKG_CHECK_MODULES(LIBDPDK REQUIRED IMPORTED_TARGET libdpdk)
 
 OPTION(DEBUG "Enable debugging" OFF)
 OPTION(LTO "Use link time optimization" OFF)
@@ -86,14 +88,11 @@ ENDIF(LTO)
 IF(DPDK)
 
   MESSAGE(STATUS "Intel DPDK support is enabled (to disable, run `cmake .. -DDPDK=OFF`)")
-  set(RTE_SDK ${CMAKE_SOURCE_DIR}/build/dpdk)
-  set(RTE_TARGET x86_64-native-linux-gcc)
   add_definitions(-DUSE_DPDK)
-  add_definitions(-isystem ${RTE_SDK}/${RTE_TARGET}/include -include rte_config.h)
-  include_directories(${RTE_SDK}/${RTE_TARGET}/include)
-  include_directories(${RTE_SDK}/lib/librte_eal/linux/eal/include)
+  
+  include_directories(${LIBDPDK_INCLUDE_DIRS})
 
-  link_directories(${LINK_DIRECTORIES} ${RTE_SDK}/${RTE_TARGET}/lib)
+  link_directories(${LINK_DIRECTORIES} ${LIBDPDK_LIBRARY_DIRS})
   set(LIBRARIES ${LIBRARIES} -Wl,--whole-archive)
   set(LIBRARIES ${LIBRARIES} rte_hash)
   set(LIBRARIES ${LIBRARIES} -Wl,--start-group)

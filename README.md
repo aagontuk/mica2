@@ -3,7 +3,7 @@ MICA 2
 
 A fast in-memory key-value store.
 
-The current version should be compiled with DPDK v20.11 (with MLX5 PMD) and gcc-10.
+The current version should be compiled with DPDK v20.11.7 (with MLX5 PMD) and gcc-10.
 
 Requirements
 ------------
@@ -41,16 +41,18 @@ Dependencies for execution
 Compiling DPDK
 --------------
 
-         * cd dpdk-16.11
-         * make config T=x86_64-native-linuxapp-gcc
+         * cd dpdk-20.11.7
+         * meson build
+         * ninja -C build
+         * sudo ninja -C build install
+         * sudo ldconfig
          # Optimization: try to increase "CONFIG_RTE_MEMPOOL_CACHE_MAX_SIZE" to 4096 in build/.config (but it can also break mempool initialization)
-         * make -j
 
 Compiling MICA
 --------------
 
          * cd mica2/build
-         * ln -s ../../dpdk-16.11 ./dpdk
+         * export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/x86_64-linux-gnu/pkgconfig
          * cmake ..
          * make -j
 
