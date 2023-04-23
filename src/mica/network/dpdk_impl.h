@@ -470,27 +470,29 @@ void DPDK<StaticConfig>::start() {
       if (endpoint_info_[eid].port_id != port_id) continue;
       auto queue_id = endpoint_info_[eid].queue_id;
       auto udp_port = endpoint_info_[eid].udp_port;
+			(void)udp_port;
+			(void)queue_id;
 
-      rte_eth_fdir_filter filter;
-      memset(&filter, 0, sizeof(filter));
-      filter.soft_id = eid;
-      filter.input.flow_type = RTE_ETH_FLOW_NONFRAG_IPV4_UDP;
-      filter.input.flow.udp4_flow.dst_port = rte_cpu_to_be_16(udp_port);
-      filter.action.rx_queue = queue_id;
-      filter.action.behavior = RTE_ETH_FDIR_ACCEPT;
-      filter.action.report_status = RTE_ETH_FDIR_NO_REPORT_STATUS;
+      //rte_eth_fdir_filter filter;
+      //memset(&filter, 0, sizeof(filter));
+      //filter.soft_id = eid;
+      //filter.input.flow_type = RTE_ETH_FLOW_NONFRAG_IPV4_UDP;
+      //filter.input.flow.udp4_flow.dst_port = rte_cpu_to_be_16(udp_port);
+      //filter.action.rx_queue = queue_id;
+      //filter.action.behavior = RTE_ETH_FDIR_ACCEPT;
+      //filter.action.report_status = RTE_ETH_FDIR_NO_REPORT_STATUS;
 
-      ret = rte_eth_dev_filter_ctrl(static_cast<uint8_t>(port_id),
-                                    RTE_ETH_FILTER_FDIR, RTE_ETH_FILTER_ADD,
-                                    &filter);
-      if (ret < 0) {
-        fprintf(stderr,
-                "error: failed to add perfect filter entry on port %" PRIu16
-                " (err=%s)\n",
-                port_id, rte_strerror(ret));
-        assert(false);
-        return;
-      }
+      //ret = rte_eth_dev_filter_ctrl(static_cast<uint8_t>(port_id),
+                                    //RTE_ETH_FILTER_FDIR, RTE_ETH_FILTER_ADD,
+                                    //&filter);
+      //if (ret < 0) {
+        //fprintf(stderr,
+                //"error: failed to add perfect filter entry on port %" PRIu16
+                //" (err=%s)\n",
+                //port_id, rte_strerror(ret));
+        //assert(false);
+        //return;
+      //};
     }
   }
 
