@@ -89,6 +89,8 @@ IF(DPDK)
 
   MESSAGE(STATUS "Intel DPDK support is enabled (to disable, run `cmake .. -DDPDK=OFF`)")
   add_definitions(-DUSE_DPDK)
+
+  find_library(MLX5 NAMES rte_net_mlx5)
   
   include_directories(${LIBDPDK_INCLUDE_DIRS})
 
@@ -97,7 +99,15 @@ IF(DPDK)
   set(LIBRARIES ${LIBRARIES} rte_hash)
   set(LIBRARIES ${LIBRARIES} -Wl,--start-group)
   set(LIBRARIES ${LIBRARIES} rte_kvargs rte_mbuf rte_ethdev rte_mempool rte_mempool_ring rte_ring rte_net rte_pci rte_eal rte_bus_pci rte_telemetry)
-  set(LIBRARIES ${LIBRARIES} rte_common_mlx5 rte_net_mlx5 ibverbs mlx5 mnl dl)
+  
+  if (MLX5)
+    MESSAGE(STATUS "Using mlx5 driver")
+    set(LIBRARIES ${LIBRARIES} rte_common_mlx5 rte_net_mlx5 ibverbs mlx5 mnl dl)
+  else()
+    MESSAGE(STATUS "Using Intel drivers")
+    set(LIBRARIES ${LIBRARIES} rte_net_i40e rte_net_ice rte_net_ixgbe rte_net_ring)
+  endif()
+  
   set(LIBRARIES ${LIBRARIES} -Wl,--end-group)
   set(LIBRARIES ${LIBRARIES} -Wl,--no-whole-archive)
   set(LIBRARIES ${LIBRARIES} rt)
