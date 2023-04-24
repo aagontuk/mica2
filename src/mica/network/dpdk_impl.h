@@ -515,7 +515,7 @@ void DPDK<StaticConfig>::start() {
       /*
        * setting the third level of the pattern (UDP).
        */
-      memset(&udp_spec, 0, sizeof(struct rte_flow_item_ipv4));
+      memset(&udp_spec, 0, sizeof(struct rte_flow_item_udp));
       udp_spec.hdr.dst_port = rte_cpu_to_be_16(udp_port);
       pattern[2].type = RTE_FLOW_ITEM_TYPE_UDP;
       pattern[2].spec = &udp_spec;
