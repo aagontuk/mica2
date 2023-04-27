@@ -1,7 +1,7 @@
 #!/bin/bash
 
-HOST1_IP=10.10.2.2
-HOST2_IP=10.10.2.1
+HOST1_IP=10.10.2.2 # This server
+HOST2_IP=10.10.2.1 # Other server
 
 etcd --name infra0 --initial-advertise-peer-urls http://${HOST1_IP}:2380 \
   --listen-peer-urls http://${HOST1_IP}:2380 \
