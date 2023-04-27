@@ -90,15 +90,15 @@ IF(DPDK)
   MESSAGE(STATUS "Intel DPDK support is enabled (to disable, run `cmake .. -DDPDK=OFF`)")
   add_definitions(-DUSE_DPDK)
 
-  find_library(MLX5 NAMES rte_net_mlx5)
-  
   include_directories(${LIBDPDK_INCLUDE_DIRS})
-
   link_directories(${LINK_DIRECTORIES} ${LIBDPDK_LIBRARY_DIRS})
+  
   set(LIBRARIES ${LIBRARIES} -Wl,--whole-archive)
   set(LIBRARIES ${LIBRARIES} rte_hash)
   set(LIBRARIES ${LIBRARIES} -Wl,--start-group)
   set(LIBRARIES ${LIBRARIES} rte_kvargs rte_mbuf rte_ethdev rte_mempool rte_mempool_ring rte_ring rte_net rte_pci rte_eal rte_bus_pci rte_telemetry)
+  
+  find_library(MLX5 rte_net_mlx5 HINTS /opt/mellanox/dpdk/lib/x86_64-linux-gnu)
   
   if (MLX5)
     MESSAGE(STATUS "Using mlx5 driver")
