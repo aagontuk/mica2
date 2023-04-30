@@ -21,6 +21,7 @@ struct RequestBatchHeader {
   // 44
   uint32_t reserved0;
   // 48
+  uint64_t timestamp;
   // KeyValueRequestHeader
 };
 

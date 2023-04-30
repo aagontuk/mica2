@@ -909,6 +909,14 @@ void DatagramClient<StaticConfig>::check_pending_tx_full(
     RXTXState& rx_tx_state) {
   if (rx_tx_state.pending_tx.count < StaticConfig::kTXBurst) return;
 
+  // Add timestam to all packets
+  uint64_t now = ::mica::util::rdtsc();
+  RequestBatchHeader *rh;
+  for (uint16_t i = 0; i < rx_tx_state.pending_tx.count; i++) {
+    rh = reinterpret_cast<RequestBatchHeader *>(rx_tx_state.pending_tx.bufs[i]->get_data());
+    rh->timestamp = now;
+  }
+
   // Send all pending packets to the networks
   network_->send(rx_tx_state.eid, rx_tx_state.pending_tx.bufs.data(),
                  rx_tx_state.pending_tx.count);
