@@ -62,12 +62,13 @@ Setting up the general environment
          * cd mica2/build
          * ln -s src/mica/test/*.json .
          * ../script/setup.sh 8192 8192    # 2 NUMA nodes, 16 Ki pages (32 GiB)
-         * killall etcd; ../../etcd-v2.2.1-linux-amd64/etcd &
+         * killall etcd
+         * ../script/start-etcd.sh # Adjust IPs according to you system. Use an iterface that won't be used by DPDK
 
 Setting up etcd cluster
 ----------------------------------
 
-You need to setup an etcd cluster via the following commands:
+You need to setup an etcd cluster for client and server via the following commands:
 
 ```bash
 # Node 0
@@ -106,6 +107,18 @@ Running microbench
 
          * cd mica2/build
          * sudo ./microbench 0.00          # 0.00 = uniform key popularity
+
+Running Server
+--------------
+      
+        * cd mica2/build
+        * sudo ./server                   # Before this, adjust server.json according to your system configuration
+
+Running netbench client
+-----------------------
+
+        * cd mica2/build
+        * sudo ./netbench 0.00          # Run netbench client with uniform key popularity. Before running this adjust netbench.json
 
 Authors
 -------
