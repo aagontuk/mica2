@@ -336,11 +336,11 @@ void DPDK<StaticConfig>::start() {
   // eth_conf.rxmode.hw_vlan_filter = 1;
   // eth_conf.rxmode.hw_vlan_strip = 1;
   eth_conf.txmode.mq_mode = ETH_MQ_TX_NONE;
-  eth_conf.fdir_conf.mode = RTE_FDIR_MODE_PERFECT;
-  eth_conf.fdir_conf.pballoc = RTE_FDIR_PBALLOC_64K;
-  eth_conf.fdir_conf.status = RTE_FDIR_NO_REPORT_STATUS;
-  eth_conf.fdir_conf.mask.dst_port_mask = 0xffff;
-  eth_conf.fdir_conf.drop_queue = 0;
+  //eth_conf.fdir_conf.mode = RTE_FDIR_MODE_PERFECT;
+  //eth_conf.fdir_conf.pballoc = RTE_FDIR_PBALLOC_64K;
+  //eth_conf.fdir_conf.status = RTE_FDIR_NO_REPORT_STATUS;
+  //eth_conf.fdir_conf.mask.dst_port_mask = 0xffff;
+  //eth_conf.fdir_conf.drop_queue = 0;
 
   eth_rx_conf.rx_thresh.pthresh = 8;
   eth_rx_conf.rx_thresh.hthresh = 0;
