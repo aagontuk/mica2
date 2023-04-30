@@ -464,6 +464,69 @@ void DPDK<StaticConfig>::start() {
            (link.link_duplex == ETH_LINK_FULL_DUPLEX) ? ("full-duplex")
                                                       : ("half-duplex"));
   }
+  
+  /* Layer names, to be used inorder to access the relevent item. */
+  enum layer_name {
+    L2,
+    L3,
+    L4,
+    TUNNEL,
+    L2_INNER,
+    L3_INNER,
+    L4_INNER,
+    END
+  };
+
+  /* The pattern list, this list is used inorder to save reallocation of each
+   * for each call, RTE_FLOW_TYPE_VOID marks that his item should be ignored
+   * and dosn't affect the the matching. Using the void action type allows this
+   * list to be shared between number of different flows.
+   * RTE_FLOW_TYPE_END marks the last item in the list and must appear.
+   * spec = NULL, will result that all traffic that includes header from the
+   * selected type will be hit.
+   */
+  struct rte_flow_item pattern[] = {
+    [L2] = { /* ETH type is set since we always start from ETH. */
+      .type = RTE_FLOW_ITEM_TYPE_ETH,
+      .spec = NULL,
+      .last = NULL,
+      .mask = NULL },
+    [L3] = {
+      .type = RTE_FLOW_ITEM_TYPE_VOID,
+      .spec = NULL,
+      .last = NULL,
+      .mask = NULL },
+    [L4] = {
+      .type = RTE_FLOW_ITEM_TYPE_VOID,
+      .spec = NULL,
+      .last = NULL,
+      .mask = NULL },
+    [TUNNEL] = {
+      .type = RTE_FLOW_ITEM_TYPE_VOID,
+      .spec = NULL,
+      .last = NULL,
+      .mask = NULL },
+    [L2_INNER] = {
+      .type = RTE_FLOW_ITEM_TYPE_VOID,
+      .spec = NULL,
+      .last = NULL,
+      .mask = NULL },
+    [L3_INNER] = {
+      .type = RTE_FLOW_ITEM_TYPE_VOID,
+      .spec = NULL,
+      .last = NULL,
+      .mask = NULL },
+    [L4_INNER] = {
+      .type = RTE_FLOW_ITEM_TYPE_VOID,
+      .spec = NULL,
+      .last = NULL,
+      .mask = NULL },
+    [END] = {
+      .type = RTE_FLOW_ITEM_TYPE_END,
+      .spec = NULL,
+      .last = NULL,
+      .mask = NULL },
+  };
 
   for (uint16_t port_id = 0; port_id < ports_.size(); port_id++) {
     if (!ports_[port_id].valid) continue;
@@ -473,60 +536,49 @@ void DPDK<StaticConfig>::start() {
       if (endpoint_info_[eid].port_id != port_id) continue;
       auto queue_id = endpoint_info_[eid].queue_id;
       auto udp_port = endpoint_info_[eid].udp_port;
-
-      struct rte_flow_attr attr;
-      struct rte_flow_item pattern[MAX_PATTERN_NUM];
-      struct rte_flow_action action[MAX_ACTION_NUM];
-      struct rte_flow_action_queue queue = { .index = queue_id };
-      struct rte_flow_item_udp udp_spec;
       int res;
 
-      memset(pattern, 0, sizeof(pattern));
-      memset(action, 0, sizeof(action));
+      struct rte_flow_attr attr = { /* Holds the flow attributes. */
+          .group = 0, /* set the rule on the main group. */
+          .priority = 0, /* Rule priority. */
+          .ingress = 1, };/* Rx flow. */
+      
+      struct rte_flow_action_queue queue = {
+      .index = queue_id,
+      };
 
-      /*
-       * set the rule attribute.
-       * in this case only ingress packets will be checked.
-       */
-      memset(&attr, 0, sizeof(struct rte_flow_attr));
-      attr.ingress = 1;
+      struct rte_flow_action actions[] = {
+      [0] = {
+        .type = RTE_FLOW_ACTION_TYPE_QUEUE,
+        .conf = &queue},
+      [1] = { /* End action mast be the last action. */
+        .type = RTE_FLOW_ACTION_TYPE_END,
+        .conf = NULL }
+      };
 
-      /*
-       * create the action sequence.
-       * one action only,  move packet to queue
-       */
-      action[0].type = RTE_FLOW_ACTION_TYPE_QUEUE;
-      action[0].conf = &queue;
-      action[1].type = RTE_FLOW_ACTION_TYPE_END;
+      struct rte_flow_item_udp udp_spec = {
+        .hdr = {
+          .dst_port = rte_cpu_to_be_16(udp_port),
+        },
+      };
 
-      /*
-       * set the first level of the pattern (ETH).
-       * since in this example we just want to get the
-       * udp we set this level to allow all.
-       */
-      pattern[0].type = RTE_FLOW_ITEM_TYPE_ETH;
+      struct rte_flow_item_udp udp_mask = {
+        .hdr = {
+          .dst_port = rte_cpu_to_be_16(UINT16_MAX),
+        },
+      };
 
-      /*
-       * set the second level of the patter to IPV4
-       * and allow any flow
-       */
-      pattern[1].type = RTE_FLOW_ITEM_TYPE_IPV4;
+      pattern[L2].type = RTE_FLOW_ITEM_TYPE_ETH;
+      pattern[L3].type = RTE_FLOW_ITEM_TYPE_IPV4;
+      pattern[L4].type = RTE_FLOW_ITEM_TYPE_UDP;
+      pattern[L4].spec = &udp_spec;
+      pattern[L4].mask = &udp_mask;
 
-      /*
-       * setting the third level of the pattern (UDP).
-       */
-      memset(&udp_spec, 0, sizeof(struct rte_flow_item_udp));
-      udp_spec.hdr.dst_port = rte_cpu_to_be_16(udp_port);
-      pattern[2].type = RTE_FLOW_ITEM_TYPE_UDP;
-      pattern[2].spec = &udp_spec;
 
-      /* the final level must be always type end */
-      pattern[3].type = RTE_FLOW_ITEM_TYPE_END;
-
-      res = rte_flow_validate(port_id, &attr, pattern, action, &error);
+      res = rte_flow_validate(port_id, &attr, pattern, actions, &error);
 
       if (!res)
-        flow = rte_flow_create(port_id, &attr, pattern, action, &error);
+        flow = rte_flow_create(port_id, &attr, pattern, actions, &error);
 
       if (!flow) {
         printf("Flow can't be created %d message: %s\n",
