@@ -63,7 +63,7 @@ Setting up the general environment
          * ln -s src/mica/test/*.json .
          * ../script/setup.sh 8192 8192    # 2 NUMA nodes, 16 Ki pages (32 GiB)
          * killall etcd
-         * ../script/start-etcd.sh # Adjust IPs according to you system. Use an iterface that won't be used by DPDK
+         * ../script/start-etcd.sh & # Skip next section. Adjust IPs according to you system. Use an iterface that won't be used by DPDK
 
 Setting up etcd cluster
 ----------------------------------
