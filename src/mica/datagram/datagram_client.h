@@ -120,10 +120,14 @@ class DatagramClient {
 
   void probe_reachability();
 
+  ::mica::util::Stopwatch get_stopwatch() const {
+    return stopwatch_;
+  }
+
   bool can_request(uint64_t key_hash) const;
 
   template <class ResponseHandler>
-  void handle_response(ResponseHandler& rh);
+  void handle_response(ResponseHandler& rh, uint64_t *rtts, uint64_t *count_responses);
 
   // TODO
   // void flush();

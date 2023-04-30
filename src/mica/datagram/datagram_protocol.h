@@ -150,6 +150,11 @@ class RequestBatchReader {
     return bh->magic == 0x79;
   }
 
+  uint64_t get_timestamp() const {
+    auto bh = reinterpret_cast<const RequestBatchHeader*>(buf_->get_data());
+    return bh->timestamp;
+  }
+
   bool find_next() {
     if (h_ == nullptr)
       h_ = reinterpret_cast<const RequestHeader*>(buf_->get_data() +

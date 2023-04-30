@@ -461,7 +461,7 @@ bool DatagramClient<StaticConfig>::can_request(uint64_t key_hash) const {
 
 template <class StaticConfig>
 template <class ResponseHandler>
-void DatagramClient<StaticConfig>::handle_response(ResponseHandler& rh) {
+void DatagramClient<StaticConfig>::handle_response(ResponseHandler& rh, uint64_t *rtts, uint64_t *count_responses) {
   size_t lcore_id = ::mica::util::lcore.lcore_id();
   auto& thread_state = thread_states_[lcore_id];
 
@@ -495,6 +495,11 @@ void DatagramClient<StaticConfig>::handle_response(ResponseHandler& rh) {
         RequestBatchReader<PacketBuffer> r(bufs[i]);
 
         if (!r.is_valid() || !r.is_response()) continue;
+
+        // record the RTT
+        //printf("recording RTT\n");
+        rtts[*count_responses] = now - r.get_timestamp();
+        *count_responses += 1;
 
         if (StaticConfig::kVerbose)
           printf("lcore %2zu received a batch\n",
@@ -910,7 +915,7 @@ void DatagramClient<StaticConfig>::check_pending_tx_full(
   if (rx_tx_state.pending_tx.count < StaticConfig::kTXBurst) return;
 
   // Add timestam to all packets
-  uint64_t now = ::mica::util::rdtsc();
+  uint64_t now = stopwatch_.now();
   RequestBatchHeader *rh;
   for (uint16_t i = 0; i < rx_tx_state.pending_tx.count; i++) {
     rh = reinterpret_cast<RequestBatchHeader *>(rx_tx_state.pending_tx.bufs[i]->get_data());
