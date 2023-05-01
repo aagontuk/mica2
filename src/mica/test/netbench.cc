@@ -4,6 +4,7 @@
 #include "mica/util/zipf.h"
 
 #define MAX_SAMPLES 10000000000UL
+#define MAX_SAMPLES_PER_THREAD MAX_SAMPLES / 4
 
 int comp(const void *a, const void *b) {
 	uint64_t ua = *((uint64_t *)a);
@@ -192,11 +193,11 @@ int main(int argc, const char* argv[]) {
   for (uint16_t lcore_id = 1; lcore_id < lcore_count; lcore_id++) {
     if (!rte_lcore_is_enabled(static_cast<uint8_t>(lcore_id))) continue;
     lcore_enabled++;
-    args[lcore_id].rtts = (uint64_t *)malloc(sizeof(uint64_t) * 100000000);
+    args[lcore_id].rtts = (uint64_t *)malloc(sizeof(uint64_t) * MAX_SAMPLES_PER_THREAD);
     rte_eal_remote_launch(worker_proc, &args[lcore_id], lcore_id);
   }
   lcore_enabled++;
-  args[0].rtts = (uint64_t *)malloc(sizeof(uint64_t) * 100000000);
+  args[0].rtts = (uint64_t *)malloc(sizeof(uint64_t) * MAX_SAMPLES_PER_THREAD);
   worker_proc(&args[0]);
 
   // wait for lcores to finish
@@ -209,7 +210,7 @@ int main(int argc, const char* argv[]) {
 
   uint64_t included_samples = 0;
   for (uint16_t lcore_id = 0; lcore_id < lcore_enabled; lcore_id++) {
-    printf("lcore %" PRIu16 ": %" PRIu64 " responses\n", lcore_id,
+    fprintf(stdout, "lcore %" PRIu16 ": %" PRIu64 " responses\n", lcore_id,
            num_responses[lcore_id]);
 	  for (uint64_t i = 0.1 * num_responses[lcore_id]; i < num_responses[lcore_id] * 0.9; i++) {	
       total_cycles += args[lcore_id].rtts[i];
@@ -222,10 +223,11 @@ int main(int argc, const char* argv[]) {
 	uint64_t p50_cycles = all_rtts[(int)(included_samples * 0.5)];
 	uint64_t p99_cycles = all_rtts[(int)(included_samples * 0.99)];
 
-	printf("mean latency (us): %f\n", (float) total_cycles /
+	fprintf(stdout, "mean latency (us): %f\n", (float) total_cycles /
       (included_samples * sw.c_1_usec()));
-	printf("median latency (us): %f\n", p50_cycles / sw.c_1_usec());
-	printf("99th latency (us): %f\n", p99_cycles / sw.c_1_usec());
+	fprintf(stdout, "median latency (us): %f\n", p50_cycles / sw.c_1_usec());
+	fprintf(stdout, "99th latency (us): %f\n", p99_cycles / sw.c_1_usec());
+  fflush(stdout);
 
   network.stop();
 
